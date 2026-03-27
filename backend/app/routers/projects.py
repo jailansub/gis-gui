@@ -34,6 +34,7 @@ def _project_to_response(project: Project, db: Session) -> ProjectResponse:
         updated_at=project.updated_at,
         processing_error=project.processing_error,
         tree_count=tree_count,
+        thumbnail_url=f"/tiles/{project.id}/thumbnail.jpg" if os.path.exists(os.path.join(settings.TILES_DIR, str(project.id), "thumbnail.jpg")) else None,
     )
 
 

@@ -286,6 +286,31 @@ def process_project_files(self, project_id: str):
                         os.remove(reprojected)
 
                     logger.info(f"Tiles generated for {raster_type}")
+
+                    # ── Generate Thumbnail for Ortho ─────────────────
+                    if raster_type == "ortho":
+                        logger.info("Generating project thumbnail")
+                        thumb_path = os.path.join(tiles_base, "thumbnail.jpg")
+                        try:
+                            # Use the original or reprojected file to create a 400px wide JPG
+                            # We use tile_input if it was the byte version, otherwise reprojected
+                            subprocess.run(
+                                [
+                                    "gdal_translate",
+                                    "-of", "JPEG",
+                                    "-outsize", "400", "0",
+                                    "-co", "QUALITY=75",
+                                    tif_file,
+                                    thumb_path
+                                ],
+                                check=True,
+                                capture_output=True,
+                                text=True,
+                            )
+                            logger.info(f"Thumbnail created at {thumb_path}")
+                        except Exception as e:
+                            logger.error(f"Thumbnail generation failed: {e}")
+
                 except subprocess.CalledProcessError as e:
                     logger.error(f"Tile generation failed for {raster_type}: {e.stderr}")
                 except Exception as e:
