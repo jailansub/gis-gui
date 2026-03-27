@@ -42,12 +42,14 @@ def list_projects(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    query = db.query(Project)
-
+    query = db.query(Project).filter(
+        Project.status.notin_([ProjectStatus.DRAFT, ProjectStatus.UPLOADING])
+    )
+    
     # Clients only see their assigned projects
     if user.role == UserRole.CLIENT:
         query = query.filter(Project.client_id == user.id)
-
+    
     projects = query.order_by(Project.created_at.desc()).all()
     return ProjectListResponse(
         projects=[_project_to_response(p, db) for p in projects],
@@ -83,7 +85,7 @@ def create_project(
         location=payload.location,
         description=payload.description,
         client_id=payload.client_id,
-        status=ProjectStatus.CREATED,
+        status=ProjectStatus.DRAFT,
     )
     db.add(project)
     db.commit()

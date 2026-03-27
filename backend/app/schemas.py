@@ -52,6 +52,7 @@ class UserResponse(BaseModel):
 # ── Project ───────────────────────────────────────────────────
 
 class ProjectStatus(str, Enum):
+    DRAFT = "draft"
     CREATED = "created"
     UNASSIGNED = "unassigned"
     UPLOADING = "uploading"

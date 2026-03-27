@@ -17,6 +17,7 @@ class UserRole(str, enum.Enum):
 
 
 class ProjectStatus(str, enum.Enum):
+    DRAFT = "draft"
     CREATED = "created"
     UNASSIGNED = "unassigned"
     UPLOADING = "uploading"
@@ -53,7 +54,7 @@ class Project(Base):
     location = Column(String(300), nullable=True)
     description = Column(Text, nullable=True)
     client_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    status = Column(SQLEnum(ProjectStatus), default=ProjectStatus.CREATED, nullable=False)
+    status = Column(SQLEnum(ProjectStatus), default=ProjectStatus.DRAFT, nullable=False)
     boundary_geojson = Column(Text, nullable=True)  # Store boundary as GeoJSON text
     area_hectares = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
