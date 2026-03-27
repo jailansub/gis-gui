@@ -90,15 +90,31 @@ export default function ProjectWizard() {
     });
   };
 
-  const handleRemoveFile = (type, fileName) => {
-    setUploadStates(prev => ({
-      ...prev,
-      [type]: { 
-        ...prev[type], 
-        files: prev[type].files.filter(f => f.name !== fileName),
-        status: prev[type].files.length <= 1 ? 'pending' : prev[type].status
+  const handleRemoveFile = async (type, fileName) => {
+    const isUploaded = uploadStates[type].status === 'completed';
+    
+    if (isUploaded) {
+      try {
+        await api.delete(`/projects/${projectId}/upload/${type}/${fileName}`);
+      } catch (err) {
+        console.error('Failed to delete file from server', err);
+        setError(`Failed to remove ${fileName} from server.`);
+        return;
       }
-    }));
+    }
+
+    setUploadStates(prev => {
+      const remainingFiles = prev[type].files.filter(f => f.name !== fileName);
+      return {
+        ...prev,
+        [type]: { 
+          ...prev[type], 
+          files: remainingFiles,
+          // If we remove an uploaded file, the layer is no longer 'completed'
+          status: remainingFiles.length === 0 ? 'pending' : (isUploaded ? 'pending' : prev[type].status)
+        }
+      };
+    });
   };
 
   const uploadLayer = async (type) => {
@@ -308,7 +324,7 @@ export default function ProjectWizard() {
                               }}>
                                 📄 {file.name}
                               </span>
-                              {uploadStates[layer.id].status === 'pending' && (
+                              {uploadStates[layer.id].status !== 'uploading' && (
                                 <button 
                                   className="btn-icon" 
                                   style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', padding: '0 4px', fontSize: '16px' }}
@@ -332,22 +348,24 @@ export default function ProjectWizard() {
                             })()
                           )}
                           
-                          {uploadStates[layer.id].status === 'pending' && (
+                          {uploadStates[layer.id].status !== 'uploading' && (
                             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                               <button 
                                 className="btn btn--secondary btn--sm" 
                                 style={{ flex: 1 }}
                                 onClick={() => document.getElementById(`file-${layer.id}`).click()}
                               >
-                                Add More
+                                {uploadStates[layer.id].status === 'completed' ? 'Change / Add Files' : 'Add More'}
                               </button>
-                              <button 
-                                className="btn btn--primary btn--sm" 
-                                style={{ flex: 1 }}
-                                onClick={() => uploadLayer(layer.id)}
-                              >
-                                Upload
-                              </button>
+                              {uploadStates[layer.id].status === 'pending' && (
+                                <button 
+                                  className="btn btn--primary btn--sm" 
+                                  style={{ flex: 1 }}
+                                  onClick={() => uploadLayer(layer.id)}
+                                >
+                                  Upload
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>

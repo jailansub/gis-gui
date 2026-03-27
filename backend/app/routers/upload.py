@@ -112,3 +112,35 @@ def get_processing_status(
         status=project.status.value,
         error=project.processing_error,
     )
+
+
+@router.delete("/{project_id}/upload/{layer_type}/{filename}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project_layer_file(
+    project_id: UUID,
+    layer_type: str,
+    filename: str,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Determine the actual filename on disk
+    actual_filename = filename
+    if layer_type == "ortho" and filename.lower().endswith((".tif", ".tiff")):
+        actual_filename = "ortho.tif"
+    elif layer_type == "dtm" and filename.lower().endswith((".tif", ".tiff")):
+        actual_filename = "dtm.tif"
+    elif layer_type == "dsm" and filename.lower().endswith((".tif", ".tiff")):
+        actual_filename = "dsm.tif"
+
+    file_path = os.path.join(settings.UPLOAD_DIR, str(project_id), actual_filename)
+    
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    # Optional: If the directory is now empty or missing required files, 
+    # the frontend will handle resetting the status to 'pending'.
+    
+    return
