@@ -70,10 +70,34 @@ export default function ProjectWizard() {
     }
   };
 
-  const handleFileSelect = (type, files) => {
+  const handleFileSelect = (type, newFiles) => {
+    const fileArray = Array.from(newFiles);
+    setUploadStates(prev => {
+      const existingFiles = prev[type].files;
+      // For multiple-select layers, append. For single-select, replace.
+      const isMultiple = LAYER_TYPES.find(t => t.id === type)?.multiple;
+      const updatedFiles = isMultiple ? [...existingFiles, ...fileArray] : fileArray;
+      
+      // Filter out duplicates by name
+      const uniqueFiles = updatedFiles.filter((file, index, self) =>
+        index === self.findIndex((t) => t.name === file.name)
+      );
+
+      return {
+        ...prev,
+        [type]: { ...prev[type], files: uniqueFiles, status: 'pending', progress: 0 }
+      };
+    });
+  };
+
+  const handleRemoveFile = (type, fileName) => {
     setUploadStates(prev => ({
       ...prev,
-      [type]: { ...prev[type], files: Array.from(files), status: 'pending', progress: 0 }
+      [type]: { 
+        ...prev[type], 
+        files: prev[type].files.filter(f => f.name !== fileName),
+        status: prev[type].files.length <= 1 ? 'pending' : prev[type].status
+      }
     }));
   };
 
@@ -265,26 +289,72 @@ export default function ProjectWizard() {
 
                     <div className="upload-card__body">
                       {uploadStates[layer.id].files.length > 0 ? (
-                        <div className="upload-card__file-info">
-                          <span className="file-name">{uploadStates[layer.id].files.map(f => f.name).join(', ')}</span>
+                        <div className="upload-card__file-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                          {uploadStates[layer.id].files.map(file => (
+                            <div key={file.name} className="file-item" style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '6px 10px',
+                              background: 'rgba(255,255,255,0.05)',
+                              borderRadius: '6px',
+                              fontSize: '12px'
+                            }}>
+                              <span style={{ 
+                                textOverflow: 'ellipsis', 
+                                overflow: 'hidden', 
+                                whiteSpace: 'nowrap',
+                                maxWidth: '180px'
+                              }}>
+                                📄 {file.name}
+                              </span>
+                              {uploadStates[layer.id].status === 'pending' && (
+                                <button 
+                                  className="btn-icon" 
+                                  style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', padding: '0 4px', fontSize: '16px' }}
+                                  onClick={() => handleRemoveFile(layer.id, file.name)}
+                                >
+                                  &times;
+                                </button>
+                              )}
+                            </div>
+                          ))}
+
                           {layer.id !== 'ortho' && layer.id !== 'dtm' && layer.id !== 'dsm' && uploadStates[layer.id].files.length > 0 && (
                             (() => {
                               const exts = uploadStates[layer.id].files.map(f => f.name.split('.').pop().toLowerCase());
                               const missing = ['dbf', 'shx', 'prj'].filter(e => !exts.includes(e));
                               return missing.length > 0 ? (
-                                <p style={{ color: 'var(--accent-red)', fontSize: '11px', marginTop: '4px' }}>
+                                <p style={{ color: 'var(--accent-red)', fontSize: '11px', marginTop: '0', paddingLeft: '4px' }}>
                                   ⚠️ Missing: .{missing.join(', .')}! Select all parts.
                                 </p>
                               ) : null;
                             })()
                           )}
+                          
                           {uploadStates[layer.id].status === 'pending' && (
-                            <button className="btn btn--primary btn--sm" onClick={() => uploadLayer(layer.id)}>Upload</button>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                              <button 
+                                className="btn btn--secondary btn--sm" 
+                                style={{ flex: 1 }}
+                                onClick={() => document.getElementById(`file-${layer.id}`).click()}
+                              >
+                                Add More
+                              </button>
+                              <button 
+                                className="btn btn--primary btn--sm" 
+                                style={{ flex: 1 }}
+                                onClick={() => uploadLayer(layer.id)}
+                              >
+                                Upload
+                              </button>
+                            </div>
                           )}
                         </div>
                       ) : (
                         <button 
                           className="btn btn--secondary btn--sm"
+                          style={{ width: '100%' }}
                           onClick={() => document.getElementById(`file-${layer.id}`).click()}
                         >
                           Select Files
