@@ -147,61 +147,64 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {loading && projects.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem' }}>
-            <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
-            <p>Loading projects...</p>
+        <div className="card">
+          <div className="card__header">
+            <h2 className="card__title">Project List</h2>
           </div>
-        ) : projects.length === 0 ? (
-          <div className="empty-state" style={{ padding: '4rem' }}>
-            <div className="empty-state__icon">📂</div>
-            <h2 className="empty-state__title">No Projects Found</h2>
-            <p className="empty-state__text">Create your first project to get started.</p>
+          
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Project Name</th>
+                  <th>Location</th>
+                  <th>Assigned Client</th>
+                  <th>Status</th>
+                  <th>Upload Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && projects.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Loading projects...</td>
+                  </tr>
+                ) : projects.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No projects found. Create one to get started.</td>
+                  </tr>
+                ) : (
+                  projects.map((project) => (
+                    <tr key={project.id}>
+                      <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{project.name}</td>
+                      <td>{project.location || '—'}</td>
+                      <td>{project.client_name || 'Unassigned'}</td>
+                      <td>{getStatusBadge(project.status)}</td>
+                      <td>{new Date(project.created_at).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button 
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => navigate('/')}
+                          >
+                            View
+                          </button>
+                          <button 
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => handleDeleteProject(project.id)}
+                            style={{ color: '#ef4444' }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <div className="project-grid">
-            {projects.map((project) => (
-              <div key={project.id} className="project-card">
-                <div className="project-card__thumbnail">
-                  {project.thumbnail_url ? (
-                    <img src={project.thumbnail_url} alt={project.name} />
-                  ) : (
-                    <div className="project-card__placeholder">🗺️</div>
-                  )}
-                  <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10 }}>
-                    {getStatusBadge(project.status)}
-                  </div>
-                </div>
-                <div className="project-card__content">
-                  <h3 className="project-card__title">{project.name}</h3>
-                  <div className="project-card__date">
-                    {project.location || 'Unknown Location'} • {new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </div>
-                  <p className="project-card__desc">
-                    {project.description || 'No description provided for this project.'}
-                  </p>
-                  <div className="project-card__footer">
-                    <button 
-                      className="btn btn--primary" 
-                      style={{ flex: 1 }}
-                      onClick={() => navigate('/')}
-                    >
-                      Open
-                    </button>
-                    <button 
-                      className="btn btn--secondary" 
-                      style={{ marginLeft: '8px', color: 'var(--accent-red)', padding: '8px' }}
-                      onClick={() => handleDeleteProject(project.id)}
-                      title="Delete Project"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </main>
 
       {/* Custom Confirmation Modal */}

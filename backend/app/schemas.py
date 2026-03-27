@@ -89,7 +89,6 @@ class ProjectResponse(BaseModel):
     updated_at: datetime
     processing_error: Optional[str] = None
     tree_count: Optional[int] = None
-    thumbnail_url: Optional[str] = None
 
     class Config:
         from_attributes = True

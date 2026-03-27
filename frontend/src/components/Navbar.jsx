@@ -9,7 +9,6 @@ export default function Navbar({
   onViewChange,
   showViewToggle = false,
   showProjectSelector = false,
-  onBackToDashboard,
 }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -41,16 +40,12 @@ export default function Navbar({
         <span>PlantView</span>
       </div>
 
-      <div className="navbar__nav">
-        {user?.role === 'admin' ? (
-          <>
-            <button className="navbar__nav-link" onClick={() => navigate('/admin')}>Projects</button>
-            <button className="navbar__nav-link" onClick={() => navigate('/admin/clients')}>Clients</button>
-          </>
-        ) : (
-          <button className="navbar__nav-link" onClick={() => onBackToDashboard?.()}>Projects</button>
-        )}
-      </div>
+      {user?.role === 'admin' && (
+        <div className="navbar__nav">
+          <button className="navbar__nav-link" onClick={() => navigate('/admin')}>Projects</button>
+          <button className="navbar__nav-link" onClick={() => navigate('/admin/clients')}>Clients</button>
+        </div>
+      )}
 
       <div className="navbar__center">
         {showProjectSelector && projects.length > 0 && (
