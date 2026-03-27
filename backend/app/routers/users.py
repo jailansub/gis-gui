@@ -7,7 +7,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models import User, UserRole, Project
 from app.auth import require_admin, hash_password
-from app.schemas import UserCreate, UserResponse
+from app.schemas import UserCreate, UserResponse, UserUpdate
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
@@ -71,7 +71,7 @@ def create_user(
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(
     user_id: UUID,
-    payload: UserCreate,  # Reusing UserCreate for now, or could make a UserUpdate
+    payload: UserUpdate,
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
@@ -79,25 +79,21 @@ def update_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if payload.username != user.username:
+    if payload.username is not None and payload.username != user.username:
         existing = db.query(User).filter(User.username == payload.username).first()
         if existing:
             raise HTTPException(status_code=409, detail="Username already taken")
         user.username = payload.username
 
-    user.full_name = payload.full_name
-    if payload.password:
+    if payload.full_name is not None:
+        user.full_name = payload.full_name
+        
+    if payload.password is not None:
         user.password_hash = hash_password(payload.password)
     
     db.commit()
     db.refresh(user)
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        full_name=user.full_name,
-        role=user.role.value,
-        created_at=user.created_at,
-    )
+    return _user_to_response(user, db)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

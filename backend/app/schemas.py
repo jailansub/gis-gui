@@ -31,6 +31,12 @@ class UserCreate(BaseModel):
     role: UserRole = UserRole.CLIENT
 
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=100)
+    password: Optional[str] = Field(None, min_length=6)
+    full_name: Optional[str] = Field(None, min_length=1, max_length=200)
+
+
 class UserResponse(BaseModel):
     id: UUID
     username: str
@@ -47,6 +53,7 @@ class UserResponse(BaseModel):
 
 class ProjectStatus(str, Enum):
     CREATED = "created"
+    UNASSIGNED = "unassigned"
     UPLOADING = "uploading"
     PROCESSING = "processing"
     READY = "ready"

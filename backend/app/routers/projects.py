@@ -108,8 +108,19 @@ def update_project(
         project.location = payload.location
     if payload.description is not None:
         project.description = payload.description
-    if payload.client_id is not None:
-        project.client_id = payload.client_id
+    
+    # Handle client assignment and status
+    if "client_id" in payload.model_fields_set:
+        if payload.client_id is None:
+            project.client_id = None
+            project.status = ProjectStatus.UNASSIGNED
+        else:
+            project.client_id = payload.client_id
+            # If it was unassigned, move it to CREATED (or READY if it has trees)
+            if project.status == ProjectStatus.UNASSIGNED:
+                # Check if it has trees (processed)
+                tree_count = db.query(func.count(Tree.id)).filter(Tree.project_id == project.id).scalar()
+                project.status = ProjectStatus.READY if tree_count > 0 else ProjectStatus.CREATED
 
     db.commit()
     db.refresh(project)

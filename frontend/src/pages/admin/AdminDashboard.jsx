@@ -39,6 +39,7 @@ export default function AdminDashboard() {
   const getStatusBadge = (status) => {
     const labels = {
       'created': 'Created',
+      'unassigned': 'Not Assigned',
       'uploading': 'Uploading',
       'processing': 'Processing',
       'ready': 'Ready',

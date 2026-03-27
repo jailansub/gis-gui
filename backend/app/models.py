@@ -18,6 +18,7 @@ class UserRole(str, enum.Enum):
 
 class ProjectStatus(str, enum.Enum):
     CREATED = "created"
+    UNASSIGNED = "unassigned"
     UPLOADING = "uploading"
     PROCESSING = "processing"
     READY = "ready"

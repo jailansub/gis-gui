@@ -687,6 +687,11 @@ select.input {
   color: var(--text-muted);
 }
 
+.badge--unassigned {
+  background: rgba(168, 85, 247, 0.12);
+  color: var(--accent-purple);
+}
+
 .badge--healthy {
   background: var(--accent-green-soft);
   color: var(--accent-green);
