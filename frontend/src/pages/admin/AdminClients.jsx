@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/client';
 import Navbar from '../../components/Navbar';
+import ConfirmModal from '../../components/ConfirmModal';
 
 export default function AdminClients() {
   const [clients, setClients] = useState([]);
@@ -9,6 +10,19 @@ export default function AdminClients() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
+  
+  // Custom Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmLabel: 'OK',
+    cancelLabel: '',
+    type: 'info',
+    onConfirm: () => {},
+    onCancel: () => setConfirmModal(prev => ({ ...prev, show: false }))
+  });
+
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -45,6 +59,35 @@ export default function AdminClients() {
     loadData();
   }, []);
 
+  const showAlert = (title, message, type = 'info') => {
+    setConfirmModal({
+      show: true,
+      title,
+      message,
+      confirmLabel: 'OK',
+      cancelLabel: '',
+      type,
+      onConfirm: () => setConfirmModal(prev => ({ ...prev, show: false })),
+      onCancel: () => setConfirmModal(prev => ({ ...prev, show: false }))
+    });
+  };
+
+  const showConfirm = (title, message, onConfirm, type = 'warning') => {
+    setConfirmModal({
+      show: true,
+      title,
+      message,
+      confirmLabel: 'Confirm',
+      cancelLabel: 'Cancel',
+      type,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(prev => ({ ...prev, show: false }));
+      },
+      onCancel: () => setConfirmModal(prev => ({ ...prev, show: false }))
+    });
+  };
+
   const handleAddClient = async (e) => {
     e.preventDefault();
     setError(null);
@@ -80,23 +123,27 @@ export default function AdminClients() {
       await api.put(`/users/${editingClient.id}`, updateData);
       setShowEditModal(false);
       fetchClients();
+      showAlert('Success', 'Client profile updated correctly.', 'success');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to update client');
     }
   };
 
-  const handleDeleteClient = async (clientId) => {
-    if (!window.confirm('Are you sure you want to delete this client? All their assigned projects will become unassigned.')) {
-      return;
-    }
-
-    try {
-      await api.delete(`/users/${clientId}`);
-      fetchClients();
-      fetchProjects();
-    } catch (err) {
-      alert('Failed to delete client');
-    }
+  const handleDeleteClient = (clientId) => {
+    showConfirm(
+      'Delete Client',
+      'Are you sure you want to delete this client? All their assigned projects will become unassigned.',
+      async () => {
+        try {
+          await api.delete(`/users/${clientId}`);
+          fetchClients();
+          fetchProjects();
+        } catch (err) {
+          showAlert('Error', 'Failed to delete client. They might have active dependencies.', 'danger');
+        }
+      },
+      'danger'
+    );
   };
 
   const toggleProjectAssignment = async (projectId, clientId) => {
@@ -105,7 +152,14 @@ export default function AdminClients() {
       fetchProjects();
       fetchClients();
     } catch (err) {
-      alert('Failed to update project assignment');
+      const detail = err.response?.data?.detail;
+      const errorMessage = typeof detail === 'string' 
+        ? detail 
+        : Array.isArray(detail) 
+          ? detail.map(d => d.msg).join(', ') 
+          : 'An unexpected error occurred while updating the project assignment.';
+      
+      showAlert('Assignment Failed', errorMessage, 'danger');
     }
   };
 
@@ -368,6 +422,9 @@ export default function AdminClients() {
           </div>
         </div>
       )}
+
+      {/* Custom Confirmation Modal */}
+      <ConfirmModal {...confirmModal} />
     </div>
   );
 }

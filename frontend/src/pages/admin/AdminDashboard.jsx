@@ -2,12 +2,25 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import Navbar from '../../components/Navbar';
+import ConfirmModal from '../../components/ConfirmModal';
 
 export default function AdminDashboard() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({ total: 0, processing: 0, ready: 0 });
   
+  // Custom Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmLabel: 'OK',
+    cancelLabel: '',
+    type: 'info',
+    onConfirm: () => {},
+    onCancel: () => setConfirmModal(prev => ({ ...prev, show: false }))
+  });
+
   const navigate = useNavigate();
 
   const fetchProjects = async () => {
@@ -50,6 +63,38 @@ export default function AdminDashboard() {
         {status === 'processing' && <span className="badge__dot" />}
         {labels[status] || status}
       </span>
+    );
+  };
+
+  const showConfirm = (title, message, onConfirm, type = 'warning') => {
+    setConfirmModal({
+      show: true,
+      title,
+      message,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      type,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(prev => ({ ...prev, show: false }));
+      },
+      onCancel: () => setConfirmModal(prev => ({ ...prev, show: false }))
+    });
+  };
+
+  const handleDeleteProject = (projectId) => {
+    showConfirm(
+      'Delete Project',
+      'Are you sure you want to delete this project? This will permanently remove all data and tiles.',
+      async () => {
+        try {
+          await api.delete(`/projects/${projectId}`);
+          fetchProjects();
+        } catch (err) {
+          console.error('Failed to delete project', err);
+        }
+      },
+      'danger'
     );
   };
 
@@ -146,11 +191,7 @@ export default function AdminDashboard() {
                           </button>
                           <button 
                             className="btn btn--secondary btn--sm"
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to delete this project? This will permanently remove all data and tiles.')) {
-                                api.delete(`/projects/${project.id}`).then(() => fetchProjects());
-                              }
-                            }}
+                            onClick={() => handleDeleteProject(project.id)}
                             style={{ color: '#ef4444' }}
                           >
                             Delete
@@ -165,6 +206,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Custom Confirmation Modal */}
+      <ConfirmModal {...confirmModal} />
     </div>
   );
 }
