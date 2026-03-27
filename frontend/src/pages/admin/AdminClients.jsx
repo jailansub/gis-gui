@@ -10,6 +10,8 @@ export default function AdminClients() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
+  const [showAddPassword, setShowAddPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
   
   // Custom Modal State
   const [confirmModal, setConfirmModal] = useState({
@@ -280,14 +282,24 @@ export default function AdminClients() {
 
               <div className="form-group">
                 <label className="form-label">Password</label>
-                <input 
-                  type="password" 
-                  className="form-input" 
-                  required 
-                  value={formData.password}
-                  onChange={e => setFormData({...formData, password: e.target.value})}
-                  placeholder="Minimum 6 characters"
-                />
+                <div className="password-field-container">
+                  <input 
+                    type={showAddPassword ? "text" : "password"} 
+                    className="form-input" 
+                    required 
+                    value={formData.password}
+                    onChange={e => setFormData({...formData, password: e.target.value})}
+                    placeholder="Minimum 6 characters"
+                  />
+                  <button 
+                    type="button" 
+                    className="password-toggle"
+                    onClick={() => setShowAddPassword(!showAddPassword)}
+                    aria-label={showAddPassword ? "Hide password" : "Show password"}
+                  >
+                    {showAddPassword ? "👁️‍🗨️" : "👁️"}
+                  </button>
+                </div>
               </div>
 
               <div className="wizard-actions" style={{ marginTop: '1.5rem' }}>
@@ -339,13 +351,23 @@ export default function AdminClients() {
 
                   <div className="form-group">
                     <label className="form-label">New Password (leave blank to keep current)</label>
-                    <input 
-                      type="password" 
-                      className="form-input" 
-                      value={formData.password}
-                      onChange={e => setFormData({...formData, password: e.target.value})}
-                      placeholder="Minimum 6 characters"
-                    />
+                    <div className="password-field-container">
+                      <input 
+                        type={showEditPassword ? "text" : "password"} 
+                        className="form-input" 
+                        value={formData.password}
+                        onChange={e => setFormData({...formData, password: e.target.value})}
+                        placeholder="Minimum 6 characters"
+                      />
+                      <button 
+                        type="button" 
+                        className="password-toggle"
+                        onClick={() => setShowEditPassword(!showEditPassword)}
+                        aria-label={showEditPassword ? "Hide password" : "Show password"}
+                      >
+                        {showEditPassword ? "👁️‍🗨️" : "👁️"}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="wizard-actions" style={{ marginTop: '1.5rem' }}>
